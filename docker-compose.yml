@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ordermanager-postgres
+    environment:
+      POSTGRES_DB: OrderManagerDb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ordermanager-network
+    restart: unless-stopped
+    
+  ordermanager-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ordermanager-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=OrderManagerDb;Username=postgres;Password=postgres
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5000:8080"
+    depends_on:
+      - postgres
+    networks:
+      - ordermanager-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  ordermanager-network:
+    driver: bridge
